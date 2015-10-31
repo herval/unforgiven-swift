@@ -14,16 +14,17 @@ import java.util.Random;
 public class Example {
 
     public static void main(String[] args) throws Exception {
-        Random rnd = new Random();
-
-        CharacterIterator dataset = loadDataset(32, 300, 50 * 32);
+        CharacterMap charMap = CharacterMap.getMinimalCharacterMap(); //Which characters are allowed? Others will be removed
 
         NetworkManager manager = new NetworkManager(Paths.get("coefficients.bin"), Paths.get("conf.json"));
-        Network network = Network.cleanNetwork(dataset);
-//        Network network = manager.load();
+        Network network = Network.cleanNetwork(charMap);
+//        Network network = manager.load(charMap);
 
-        Trainer trainer = new Trainer(network, dataset);
-        Extractor extractor = new Extractor(network, dataset);
+        Trainer trainer = new Trainer(
+                network,
+                loadDataset(32, 300, 1600, charMap)
+        );
+        Extractor extractor = network.extractor();
 
         //Do training, and then generate and print samples from network
         for (int i = 0; i < 100; i++) {
@@ -45,20 +46,19 @@ public class Example {
         System.out.println("\n\nExample complete");
     }
 
-    private static CharacterIterator loadDataset(int miniBatchSize, int exampleLength, int examplesPerEpoch) throws Exception {
+    private static CharacterIterator loadDataset(int miniBatchSize, int exampleLength, int examplesPerEpoch, CharacterMap charMap) throws Exception {
         File taylor = new File("taylor_swift.txt");
         File metallica = new File("metallica.txt");
 
         List<String> lyrics = FileUtils.readLines(taylor);
         lyrics.addAll(FileUtils.readLines(metallica));
 
-        char[] validCharacters = CharacterIterator.getMinimalCharacterSet();    //Which characters are allowed? Others will be removed
         return new CharacterIterator(
                 lyrics,
                 miniBatchSize,
                 exampleLength,
                 examplesPerEpoch,
-                validCharacters,
+                charMap,
                 true
         );
     }

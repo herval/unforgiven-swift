@@ -5,6 +5,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor;
 import org.nd4j.linalg.factory.Nd4j;
+import us.hervalicio.unforgiven.neural.CharacterMap;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,39 +25,33 @@ import java.util.*;
 public class CharacterIterator implements DataSetIterator {
     private static final long serialVersionUID = -7287833919126626356L;
     private static final int MAX_SCAN_LENGTH = 200;
-    private char[] validCharacters;
-    private Map<Character, Integer> charToIdxMap;
     private char[] fileCharacters;
     private int exampleLength;
     private int miniBatchSize;
     private int numExamplesToFetch;
     private int examplesSoFar = 0;
-    private Random rng = new Random(12345);
-    private final int numCharacters;
     private final boolean alwaysStartAtNewLine;
+    private CharacterMap characterMap;
+    private Random rng = new Random(12345);
 
     /**
      */
-    public CharacterIterator(List<String> lines, int miniBatchSize, int exampleLength, int numExamplesToFetch, char[] validCharacters, boolean alwaysStartAtNewLine) throws IOException {
+    public CharacterIterator(List<String> lines, int miniBatchSize, int exampleLength, int numExamplesToFetch, CharacterMap characterMap, boolean alwaysStartAtNewLine) throws IOException {
         if (numExamplesToFetch % miniBatchSize != 0) {
             throw new IllegalArgumentException("numExamplesToFetch must be a multiple of miniBatchSize");
         }
         if (miniBatchSize <= 0) {
             throw new IllegalArgumentException("Invalid miniBatchSize (must be >0)");
         }
-        this.validCharacters = validCharacters;
+        this.characterMap = characterMap;
         this.exampleLength = exampleLength;
         this.miniBatchSize = miniBatchSize;
         this.numExamplesToFetch = numExamplesToFetch;
         this.alwaysStartAtNewLine = alwaysStartAtNewLine;
 
-        //Store valid characters is a map for later use in vectorization
-        charToIdxMap = new HashMap<>();
-        for (int i = 0; i < validCharacters.length; i++) charToIdxMap.put(validCharacters[i], i);
-        numCharacters = validCharacters.length;
 
         //Load file and convert contents to a char[]
-        boolean newLineValid = charToIdxMap.containsKey('\n');
+        boolean newLineValid = this.characterMap.contains('\n');
         int maxSize = lines.size();    //add lines.size() to account for newline characters at end of each line
         for (String s : lines) maxSize += s.length();
         char[] characters = new char[maxSize];
@@ -64,7 +59,7 @@ public class CharacterIterator implements DataSetIterator {
         for (String s : lines) {
             char[] thisLine = s.toCharArray();
             for (int i = 0; i < thisLine.length; i++) {
-                if (!charToIdxMap.containsKey(thisLine[i])) continue;
+                if (!this.characterMap.contains(thisLine[i])) continue;
                 characters[currIdx++] = thisLine[i];
             }
             if (newLineValid) {
@@ -87,47 +82,16 @@ public class CharacterIterator implements DataSetIterator {
                 + maxSize + " total characters (" + nRemoved + " removed)");
     }
 
-    /**
-     * A minimal character set, with a-z, A-Z, 0-9 and common punctuation etc
-     */
-    public static char[] getMinimalCharacterSet() {
-        List<Character> validChars = new LinkedList<>();
-        for (char c = 'a'; c <= 'z'; c++) validChars.add(c);
-        for (char c = 'A'; c <= 'Z'; c++) validChars.add(c);
-        for (char c = '0'; c <= '9'; c++) validChars.add(c);
-        char[] temp = {'!', '&', '(', ')', '?', '-', '\'', '"', ',', '.', ':', ';', ' ', '\n', '\t'};
-        for (char c : temp) validChars.add(c);
-        char[] out = new char[validChars.size()];
-        int i = 0;
-        for (Character c : validChars) out[i++] = c;
-        return out;
-    }
-
-    /**
-     * As per getMinimalCharacterSet(), but with a few extra characters
-     */
-    public static char[] getDefaultCharacterSet() {
-        List<Character> validChars = new LinkedList<>();
-        for (char c : getMinimalCharacterSet()) validChars.add(c);
-        char[] additionalChars = {'@', '#', '$', '%', '^', '*', '{', '}', '[', ']', '/', '+', '_',
-                '\\', '|', '<', '>'};
-        for (char c : additionalChars) validChars.add(c);
-        char[] out = new char[validChars.size()];
-        int i = 0;
-        for (Character c : validChars) out[i++] = c;
-        return out;
-    }
-
     public char convertIndexToCharacter(int idx) {
-        return validCharacters[idx];
+        return this.characterMap.charAt(idx);
     }
 
     public int convertCharacterToIndex(char c) {
-        return charToIdxMap.get(c);
+        return this.characterMap.indexOf(c);
     }
 
     public char getRandomCharacter() {
-        return validCharacters[(int) (rng.nextDouble() * validCharacters.length)];
+        return characterMap.sampleChar();
     }
 
     public boolean hasNext() {
@@ -141,8 +105,8 @@ public class CharacterIterator implements DataSetIterator {
     public DataSet next(int num) {
         if (examplesSoFar + num > numExamplesToFetch) throw new NoSuchElementException();
         //Allocate space:
-        INDArray input = Nd4j.zeros(new int[]{num, numCharacters, exampleLength});
-        INDArray labels = Nd4j.zeros(new int[]{num, numCharacters, exampleLength});
+        INDArray input = Nd4j.zeros(new int[]{num, characterMap.size(), exampleLength});
+        INDArray labels = Nd4j.zeros(new int[]{num, characterMap.size(), exampleLength});
 
         int maxStartIdx = fileCharacters.length - exampleLength;
 
@@ -159,10 +123,10 @@ public class CharacterIterator implements DataSetIterator {
                 }
             }
 
-            int currCharIdx = charToIdxMap.get(fileCharacters[startIdx]);    //Current input
+            int currCharIdx = characterMap.indexOf(fileCharacters[startIdx]);    //Current input
             int c = 0;
             for (int j = startIdx + 1; j <= endIdx; j++, c++) {
-                int nextCharIdx = charToIdxMap.get(fileCharacters[j]);        //Next character to predict
+                int nextCharIdx = characterMap.indexOf(fileCharacters[j]);        //Next character to predict
                 input.putScalar(new int[]{i, currCharIdx, c}, 1.0);
                 labels.putScalar(new int[]{i, nextCharIdx, c}, 1.0);
                 currCharIdx = nextCharIdx;
@@ -178,11 +142,11 @@ public class CharacterIterator implements DataSetIterator {
     }
 
     public int inputColumns() {
-        return numCharacters;
+        return characterMap.size();
     }
 
     public int totalOutcomes() {
-        return numCharacters;
+        return characterMap.size();
     }
 
     public void reset() {

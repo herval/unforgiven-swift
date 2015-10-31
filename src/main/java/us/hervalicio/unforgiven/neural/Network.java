@@ -18,9 +18,10 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
  * Created by herval on 10/30/15.
  */
 public class Network {
-    public final MultiLayerNetwork model;
+    final MultiLayerNetwork model;
+    private final CharacterMap characterMap;
 
-    public static Network cleanNetwork(CharacterIterator dataset) {
+    public static Network cleanNetwork(CharacterMap characterMap) {
         int lstmLayerSize = 200;                    //Number of units in each GravesLSTM layer
         MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
@@ -30,7 +31,7 @@ public class Network {
                 .regularization(true)
                 .l2(0.001)
                 .list(3)
-                .layer(0, new GravesLSTM.Builder().nIn(dataset.inputColumns()).nOut(lstmLayerSize)
+                .layer(0, new GravesLSTM.Builder().nIn(characterMap.size()).nOut(lstmLayerSize)
                         .updater(Updater.RMSPROP)
                         .activation("tanh").weightInit(WeightInit.DISTRIBUTION)
                         .dist(new UniformDistribution(-0.08, 0.08)).build())
@@ -40,7 +41,7 @@ public class Network {
                         .dist(new UniformDistribution(-0.08, 0.08)).build())
                 .layer(2, new RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT).activation("softmax")        //MCXENT + softmax for classification
                         .updater(Updater.RMSPROP)
-                        .nIn(lstmLayerSize).nOut(dataset.totalOutcomes()).weightInit(WeightInit.DISTRIBUTION)
+                        .nIn(lstmLayerSize).nOut(characterMap.size()).weightInit(WeightInit.DISTRIBUTION)
                         .dist(new UniformDistribution(-0.08, 0.08)).build())
                 .pretrain(false).backprop(true)
                 .build();
@@ -48,12 +49,13 @@ public class Network {
         MultiLayerNetwork model = new MultiLayerNetwork(config);
         model.init();
 
-        return new Network(model);
+        return new Network(model, characterMap);
     }
 
-    public Network(MultiLayerNetwork model) {
+    public Network(MultiLayerNetwork model, CharacterMap characterMap) {
         this.model = model;
         this.model.setListeners(new ScoreIterationListener(1));
+        this.characterMap = characterMap;
 
         //Print the  number of parameters in the network (and for each layer)
         Layer[] layers = model.getLayers();
@@ -64,5 +66,9 @@ public class Network {
             totalNumParams += nParams;
         }
         System.out.println("Total number of network parameters: " + totalNumParams);
+    }
+
+    public Extractor extractor() {
+        return new Extractor(this, this.characterMap);
     }
 }

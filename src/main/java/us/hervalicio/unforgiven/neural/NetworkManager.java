@@ -23,7 +23,7 @@ public class NetworkManager {
         this.topology = topology;
     }
 
-    public Network load() throws IOException {
+    public Network load(CharacterMap characterMap) throws IOException {
         MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(new File("conf.json")));
         DataInputStream dis = new DataInputStream(new FileInputStream("coefficients.bin"));
         INDArray newParams = Nd4j.read(dis);
@@ -33,7 +33,7 @@ public class NetworkManager {
         model.init();
         model.setParameters(newParams);
 
-        return new Network(model);
+        return new Network(model, characterMap);
     }
 
     public void save(Network network) throws IOException {

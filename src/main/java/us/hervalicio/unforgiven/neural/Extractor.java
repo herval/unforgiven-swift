@@ -1,12 +1,9 @@
 package us.hervalicio.unforgiven.neural;
 
-import org.deeplearning4j.examples.rnn.CharacterIterator;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -14,11 +11,11 @@ import java.util.Optional;
  */
 public class Extractor {
     private final Network network;
-    private final CharacterIterator trainingSet;
+    private final CharacterMap characterMap;
 
-    public Extractor(Network network, CharacterIterator trainingSet) {
+    public Extractor(Network network, CharacterMap characterMap) {
         this.network = network;
-        this.trainingSet = trainingSet;
+        this.characterMap = characterMap;
     }
 
     public String[] sample(int characters, int numSamples) {
@@ -33,13 +30,13 @@ public class Extractor {
      */
     private String[] samplesFromNetwork(Optional<String> startOfSequence, int charactersToSample, int numSamples) {
         //Set up initialization. If no initialization: use a random character
-        String initialization = startOfSequence.orElseGet(() -> String.valueOf(trainingSet.getRandomCharacter()));
+        String initialization = startOfSequence.orElseGet(() -> String.valueOf(characterMap.sampleChar()));
 
         //Create input for initialization
-        INDArray initializationInput = Nd4j.zeros(numSamples, trainingSet.inputColumns(), initialization.length());
+        INDArray initializationInput = Nd4j.zeros(numSamples, characterMap.size(), initialization.length());
         char[] init = initialization.toCharArray();
         for (int i = 0; i < init.length; i++) {
-            int idx = trainingSet.convertCharacterToIndex(init[i]);
+            int idx = characterMap.indexOf(init[i]);
             for (int j = 0; j < numSamples; j++) {
                 initializationInput.putScalar(new int[]{j, idx, i}, 1.0f);
             }
@@ -60,16 +57,16 @@ public class Extractor {
 
         for (int i = 0; i < charactersToSample; i++) {
             //Set up next input (single time step) by sampling from previous output
-            INDArray nextInput = Nd4j.zeros(numSamples, trainingSet.inputColumns());
+            INDArray nextInput = Nd4j.zeros(numSamples, characterMap.size());
             //Output is a probability distribution. Sample from this for each example we want to generate, and add it to the new input
             for (int s = 0; s < numSamples; s++) {
-                double[] outputProbDistribution = new double[trainingSet.totalOutcomes()];
+                double[] outputProbDistribution = new double[characterMap.size()];
                 for (int j = 0; j < outputProbDistribution.length; j++)
                     outputProbDistribution[j] = output.getDouble(s, j);
                 int sampledCharacterIdx = distribution.sample(outputProbDistribution);
 
                 nextInput.putScalar(new int[]{s, sampledCharacterIdx}, 1.0f);        //Prepare next time step input
-                builders[s].append(trainingSet.convertIndexToCharacter(sampledCharacterIdx));    //Add sampled character to StringBuilder (human readable output)
+                builders[s].append(characterMap.charAt(sampledCharacterIdx));    //Add sampled character to StringBuilder (human readable output)
             }
 
             output = network.model.rnnTimeStep(nextInput);    //Do one time step of forward pass
