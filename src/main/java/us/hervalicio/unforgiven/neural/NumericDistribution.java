@@ -1,4 +1,4 @@
-package us.hervalicio.neural;
+package us.hervalicio.unforgiven.neural;
 
 import java.util.Random;
 

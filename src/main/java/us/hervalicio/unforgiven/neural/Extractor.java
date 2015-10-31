@@ -1,4 +1,4 @@
-package us.hervalicio.neural;
+package us.hervalicio.unforgiven.neural;
 
 import org.deeplearning4j.examples.rnn.CharacterIterator;
 import org.nd4j.linalg.api.ndarray.INDArray;

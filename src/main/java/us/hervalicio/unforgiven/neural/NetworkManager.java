@@ -1,4 +1,4 @@
-package us.hervalicio.neural;
+package us.hervalicio.unforgiven.neural;
 
 import org.apache.commons.io.FileUtils;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
