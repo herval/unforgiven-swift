@@ -1,0 +1,9 @@
+.idea
+.DS_Store
+build/
+coefficients.bin
+conf.json
+gradle/
+unforgiven-swift.iml
+unforgiven-swift.ipr
+unforgiven-swift.iws
