@@ -13,15 +13,14 @@ public class Extractor {
     private final Network network;
     private final CharacterMap characterMap;
 
-    public Extractor(Network network, CharacterMap characterMap) {
-        this.network = network;
-        this.characterMap = characterMap;
+    public Extractor(NetworkManager network) {
+        this.network = network.network();
+        this.characterMap = network.characterMap();
     }
 
     public String[] sample(int characters, int numSamples) {
         return samplesFromNetwork(Optional.<String>empty(), characters, numSamples);
     }
-
 
     /**
      * Generate a sample from the network, given an (optional, possibly null) initialization. Initialization

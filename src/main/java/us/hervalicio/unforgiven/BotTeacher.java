@@ -1,0 +1,61 @@
+package us.hervalicio.unforgiven;
+
+import com.google.common.base.Joiner;
+import us.hervalicio.unforgiven.content.Loader;
+import us.hervalicio.unforgiven.neural.Extractor;
+import us.hervalicio.unforgiven.neural.NetworkManager;
+import us.hervalicio.unforgiven.neural.Trainer;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+
+/**
+ * Created by herval on 3/28/16.
+ */
+public class BotTeacher {
+
+    private static final int ITERATIONS = 100;
+    private static final int BATCH_SIZE = 32;
+    private static final int EXAMPLE_LENGTH = 300;
+    private static final int EXAMPLES_PER_ITERATION = 1600;
+
+    private final Trainer trainer;
+    private final Extractor extractor;
+    private final NetworkManager network;
+
+    public BotTeacher() throws IOException {
+        network = NetworkManager.defaultConfig();
+        network.seed();
+
+        Loader contentLoader = new Loader(
+                Arrays.asList(
+                        new File("taylor_swift.txt"),
+                        new File("metallica.txt")
+                ),
+                network.characterMap()
+        );
+
+        trainer = new Trainer(network, contentLoader.iterator(BATCH_SIZE, EXAMPLE_LENGTH, EXAMPLES_PER_ITERATION));
+        extractor = new Extractor(network);
+    }
+
+    private void run() throws IOException {
+        for (int i = 0; i < ITERATIONS; i++) {
+            System.out.println("Training epoch " + i);
+            trainer.fit();
+
+            System.out.println("Sampling: ");
+            System.out.println(
+                    Joiner.on("\n").join(extractor.sample(EXAMPLE_LENGTH, 1))
+            );
+        }
+
+        network.save();
+        System.out.println("All done!");
+    }
+
+    public static void main(String[] args) throws IOException {
+        new BotTeacher().run();
+    }
+}

@@ -1,25 +1,54 @@
 package us.hervalicio.unforgiven.tumblr;
 
+import org.nd4j.linalg.factory.Nd4j;
 import us.hervalicio.unforgiven.neural.Extractor;
 import us.hervalicio.unforgiven.neural.Network;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.nd4j.linalg.api.rng.Random;
+import us.hervalicio.unforgiven.neural.NetworkManager;
 
 /**
  * Created by herval on 10/31/15.
  */
 public class LyricsWriter {
     private final Extractor inspiredBrain;
+    private final Random rnd = Nd4j.getRandom();
 
-    public LyricsWriter(Network neuralNetwork) {
-        inspiredBrain = neuralNetwork.extractor();
+    public LyricsWriter(NetworkManager neuralNetwork) {
+        inspiredBrain = new Extractor(neuralNetwork);
+    }
+
+    public String makeUpTitle() {
+        String title = inspiredBrain.sample(10 + rnd.nextInt(50), 1)[0];
+
+        // TODO remove characters?
+        return title;
     }
 
     public Song writeASong() {
-        String title = inspiredBrain.sample(20, 1)[0];
-        String[] phrases = inspiredBrain.sample(300, 20);
+        String[] phrases = inspiredBrain.sample(100 + rnd.nextInt(200), 1+rnd.nextInt(4));
+
+        // pick up 1 - 8 verses
+        int verses = rnd.nextInt(8);
+        List<String> finalLyrics = new ArrayList<>();
+        int pickedVerses = 0;
+        for (String phrase : phrases) {
+            finalLyrics.add(phrase);
+            if (phrase.isEmpty()) {
+                pickedVerses++;
+                if (pickedVerses == verses) {
+                    break;
+                }
+            }
+        }
+
+        String lyrics = String.join("\n", finalLyrics).trim();
 
         return new Song(
-                title,
-                String.join("\n", phrases)
+                makeUpTitle(),
+                lyrics
         );
     }
 }

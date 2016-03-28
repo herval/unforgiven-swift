@@ -1,11 +1,12 @@
-package us.hervalicio.unforgiven.tumblr;
+package us.hervalicio.unforgiven;
 
-import us.hervalicio.unforgiven.neural.CharacterMap;
-import us.hervalicio.unforgiven.neural.Network;
 import us.hervalicio.unforgiven.neural.NetworkManager;
+import us.hervalicio.unforgiven.tumblr.Client;
+import us.hervalicio.unforgiven.tumblr.Config;
+import us.hervalicio.unforgiven.tumblr.LyricsWriter;
+import us.hervalicio.unforgiven.tumblr.Song;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 
 /**
  * Created by herval on 10/31/15.
@@ -28,6 +29,7 @@ public class PostBot implements Runnable {
             try {
                 client.post(sing.title, sing.lyrics);
             } catch (Exception e) {
+                System.out.println("Couldn't post at this time, will retry after the break.");
                 e.printStackTrace();
                 // TODO handle it
             }
@@ -42,16 +44,19 @@ public class PostBot implements Runnable {
     }
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
         Config conf = new Config();
 
-        CharacterMap characterMap = CharacterMap.getMinimalCharacterMap();
-        Network network = new NetworkManager(Paths.get("coefficients.bin"), Paths.get("conf.json")).load(characterMap);
-        LyricsWriter writer = new LyricsWriter(network);
+        NetworkManager manager = NetworkManager.defaultConfig();
+        manager.load();
 
-        new Thread(
+        LyricsWriter writer = new LyricsWriter(manager);
+
+        Thread proc = new Thread(
                 new PostBot(conf, writer)
-        ).run();
+        );
+        proc.run();
+        proc.join();
     }
 
 }

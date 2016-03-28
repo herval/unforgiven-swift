@@ -1,6 +1,5 @@
 package us.hervalicio.unforgiven.neural;
 
-import org.deeplearning4j.examples.rnn.CharacterIterator;
 import org.deeplearning4j.nn.api.Layer;
 import org.deeplearning4j.nn.api.OptimizationAlgorithm;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
@@ -18,11 +17,11 @@ import org.nd4j.linalg.lossfunctions.LossFunctions;
  * Created by herval on 10/30/15.
  */
 public class Network {
+    private static final int LAYER_SIZE = 200; //Number of units in each GravesLSTM layer
+
     final MultiLayerNetwork model;
-    private final CharacterMap characterMap;
 
     public static Network cleanNetwork(CharacterMap characterMap) {
-        int lstmLayerSize = 200;                    //Number of units in each GravesLSTM layer
         MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
                 .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
                 .learningRate(0.1)
@@ -31,17 +30,17 @@ public class Network {
                 .regularization(true)
                 .l2(0.001)
                 .list(3)
-                .layer(0, new GravesLSTM.Builder().nIn(characterMap.size()).nOut(lstmLayerSize)
+                .layer(0, new GravesLSTM.Builder().nIn(characterMap.size()).nOut(LAYER_SIZE)
                         .updater(Updater.RMSPROP)
                         .activation("tanh").weightInit(WeightInit.DISTRIBUTION)
                         .dist(new UniformDistribution(-0.08, 0.08)).build())
-                .layer(1, new GravesLSTM.Builder().nIn(lstmLayerSize).nOut(lstmLayerSize)
+                .layer(1, new GravesLSTM.Builder().nIn(LAYER_SIZE).nOut(LAYER_SIZE)
                         .updater(Updater.RMSPROP)
                         .activation("tanh").weightInit(WeightInit.DISTRIBUTION)
                         .dist(new UniformDistribution(-0.08, 0.08)).build())
                 .layer(2, new RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT).activation("softmax")        //MCXENT + softmax for classification
                         .updater(Updater.RMSPROP)
-                        .nIn(lstmLayerSize).nOut(characterMap.size()).weightInit(WeightInit.DISTRIBUTION)
+                        .nIn(LAYER_SIZE).nOut(characterMap.size()).weightInit(WeightInit.DISTRIBUTION)
                         .dist(new UniformDistribution(-0.08, 0.08)).build())
                 .pretrain(false).backprop(true)
                 .build();
@@ -49,13 +48,12 @@ public class Network {
         MultiLayerNetwork model = new MultiLayerNetwork(config);
         model.init();
 
-        return new Network(model, characterMap);
+        return new Network(model);
     }
 
-    public Network(MultiLayerNetwork model, CharacterMap characterMap) {
+    public Network(MultiLayerNetwork model) {
         this.model = model;
         this.model.setListeners(new ScoreIterationListener(1));
-        this.characterMap = characterMap;
 
         //Print the  number of parameters in the network (and for each layer)
         Layer[] layers = model.getLayers();
@@ -68,7 +66,4 @@ public class Network {
         System.out.println("Total number of network parameters: " + totalNumParams);
     }
 
-    public Extractor extractor() {
-        return new Extractor(this, this.characterMap);
-    }
 }

@@ -10,8 +10,8 @@ public class Trainer {
     private final Network network;
     private final DataSetIterator trainingSet;
 
-    public Trainer(Network network, DataSetIterator trainingSet) {
-        this.network = network;
+    public Trainer(NetworkManager network, DataSetIterator trainingSet) {
+        this.network = network.network();
         this.trainingSet = trainingSet;
     }
 
