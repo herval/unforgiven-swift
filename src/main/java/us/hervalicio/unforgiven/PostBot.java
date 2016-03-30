@@ -1,6 +1,5 @@
 package us.hervalicio.unforgiven;
 
-import us.hervalicio.unforgiven.neural.NetworkManager;
 import us.hervalicio.unforgiven.tumblr.Client;
 import us.hervalicio.unforgiven.tumblr.Config;
 import us.hervalicio.unforgiven.tumblr.LyricsWriter;
