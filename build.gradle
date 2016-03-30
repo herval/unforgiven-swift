@@ -24,6 +24,10 @@ repositories {
     mavenCentral()
 }
 
+task stage {
+    dependsOn build
+}
+
 dependencies {
     compile group: 'org.deeplearning4j', name: 'deeplearning4j-core', version: '0.4-rc3.4'
     compile group: "org.nd4j", name: 'nd4j-jblas', version: '0.4-rc3.4'
