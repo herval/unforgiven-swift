@@ -2,8 +2,23 @@ group 'us.hervalicio.unforgiven'
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'docker'
+
+mainClassName = "us.hervalicio.unforgiven.tumblr.PostBot"
 
 sourceCompatibility = 1.8
+
+buildscript {
+    repositories { jcenter() }
+    dependencies {
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+    }
+}
+
+docker {
+    baseImage "dockerfile/java:oracle-java8"
+}
 
 repositories {
     mavenCentral()

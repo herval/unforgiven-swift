@@ -7,9 +7,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 /**
  * Created by herval on 10/30/15.
@@ -18,20 +16,23 @@ public class NetworkManager {
     private static final String COEFICIENTS_FILE = "coefficients_network.bin";
     private static final String NETWORK_CONFIG_FILE = "conf_network.json";
 
-    private final Path topology;
-    private final Path coefficients;
+    private final File topology;
+    private final File coefficients;
     private Network network;
     private final CharacterMap characterMap;
 
-    public static NetworkManager defaultConfig() throws IOException {
+    public static NetworkManager defaultConfig(Path storagePath) throws IOException {
+        File dir = storagePath.toFile();
+        dir.mkdirs();
+
         return new NetworkManager(
-                Paths.get(COEFICIENTS_FILE),
-                Paths.get(NETWORK_CONFIG_FILE),
+                new File(storagePath.toFile(), COEFICIENTS_FILE),
+                new File(storagePath.toFile(), NETWORK_CONFIG_FILE),
                 CharacterMap.getMinimalCharacterMap()
         );
     }
 
-    public NetworkManager(Path coefficients, Path topology, CharacterMap characterMap) throws IOException {
+    public NetworkManager(File coefficients, File topology, CharacterMap characterMap) throws IOException {
         this.coefficients = coefficients;
         this.topology = topology;
         this.characterMap = characterMap;
@@ -53,8 +54,8 @@ public class NetworkManager {
     }
 
     public void load() throws IOException {
-        MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(topology.toFile()));
-        DataInputStream dis = new DataInputStream(new FileInputStream(coefficients.toFile()));
+        MultiLayerConfiguration confFromJson = MultiLayerConfiguration.fromJson(FileUtils.readFileToString(topology));
+        DataInputStream dis = new DataInputStream(new FileInputStream(coefficients));
         INDArray newParams = Nd4j.read(dis);
         dis.close();
 
@@ -66,13 +67,11 @@ public class NetworkManager {
     }
 
     public void save() throws IOException {
-        OutputStream fos = Files.newOutputStream(coefficients);
-
-        DataOutputStream dos = new DataOutputStream(fos);
+        DataOutputStream dos = new DataOutputStream(new FileOutputStream(coefficients));
         Nd4j.write(network.model.params(), dos);
         dos.flush();
         dos.close();
 
-        FileUtils.write(topology.toFile(), network.model.getLayerWiseConfigurations().toJson());
+        FileUtils.write(topology, network.model.getLayerWiseConfigurations().toJson());
     }
 }

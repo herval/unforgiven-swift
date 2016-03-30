@@ -8,7 +8,10 @@ import us.hervalicio.unforgiven.neural.Trainer;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created by herval on 3/28/16.
@@ -24,17 +27,17 @@ public class BotTeacher {
     private final Extractor extractor;
     private final NetworkManager network;
 
-    public BotTeacher() throws IOException {
-        network = NetworkManager.defaultConfig();
-        network.seed();
+    public BotTeacher(Path networkPath, List<File> files) throws IOException {
+        network = NetworkManager.defaultConfig(networkPath);
+        try {
+            network.load();
+            System.out.println("Loaded network from disk");
+        } catch (IOException e) {
+            System.out.println("Generating network from scratch");
+            network.seed();
+        }
 
-        Loader contentLoader = new Loader(
-                Arrays.asList(
-                        new File("taylor_swift.txt"),
-                        new File("metallica.txt")
-                ),
-                network.characterMap()
-        );
+        Loader contentLoader = new Loader(files, network.characterMap());
 
         trainer = new Trainer(network, contentLoader.iterator(BATCH_SIZE, EXAMPLE_LENGTH, EXAMPLES_PER_ITERATION));
         extractor = new Extractor(network);
@@ -49,13 +52,19 @@ public class BotTeacher {
             System.out.println(
                     Joiner.on("\n").join(extractor.sample(EXAMPLE_LENGTH, 1))
             );
+            network.save();
         }
 
-        network.save();
         System.out.println("All done!");
     }
 
     public static void main(String[] args) throws IOException {
-        new BotTeacher().run();
+        new BotTeacher(
+                Paths.get("networks/150_neurons"),
+                Arrays.asList(
+                        new File("inputs/taylor_swift.txt"),
+                        new File("inputs/metallica.txt")
+                )
+        ).run();
     }
 }

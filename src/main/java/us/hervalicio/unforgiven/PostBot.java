@@ -7,6 +7,7 @@ import us.hervalicio.unforgiven.tumblr.LyricsWriter;
 import us.hervalicio.unforgiven.tumblr.Song;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 /**
  * Created by herval on 10/31/15.
@@ -47,10 +48,7 @@ public class PostBot implements Runnable {
     public static void main(String[] args) throws IOException, InterruptedException {
         Config conf = new Config();
 
-        NetworkManager manager = NetworkManager.defaultConfig();
-        manager.load();
-
-        LyricsWriter writer = new LyricsWriter(manager);
+        LyricsWriter writer = new LyricsWriter(Paths.get("networks/150_neurons"));
 
         Thread proc = new Thread(
                 new PostBot(conf, writer)
