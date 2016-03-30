@@ -26,6 +26,10 @@ public class Loader {
         }
     }
 
+    public List<String> lines() {
+        return contents;
+    }
+
     public CharacterIterator iterator(int miniBatchSize,
                                       int exampleLength,
                                       int examplesPerEpoch) throws IOException {

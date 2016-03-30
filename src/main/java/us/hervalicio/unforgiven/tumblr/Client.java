@@ -2,6 +2,7 @@ package us.hervalicio.unforgiven.tumblr;
 
 import com.tumblr.jumblr.JumblrClient;
 import com.tumblr.jumblr.types.TextPost;
+import us.hervalicio.unforgiven.Config;
 
 /**
  * Created by herval on 10/31/15.

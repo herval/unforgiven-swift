@@ -9,8 +9,6 @@ import us.hervalicio.unforgiven.neural.Trainer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -59,12 +57,11 @@ public class BotTeacher {
     }
 
     public static void main(String[] args) throws IOException {
+        Config c = new Config();
+
         new BotTeacher(
-                Paths.get("networks/150_neurons"),
-                Arrays.asList(
-                        new File("inputs/taylor_swift.txt"),
-                        new File("inputs/metallica.txt")
-                )
+                c.networkPath,
+                c.contentFiles
         ).run();
     }
 }

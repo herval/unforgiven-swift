@@ -11,4 +11,9 @@ public class Song {
         this.title = title;
         this.lyrics = lyrics;
     }
+
+    @Override
+    public String toString() {
+        return title + "\n" + lyrics;
+    }
 }
