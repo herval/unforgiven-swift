@@ -21,7 +21,7 @@ public class Client {
 
     public void post(String title, String content) throws InstantiationException, IllegalAccessException {
         TextPost post = client.newPost(blogName, TextPost.class);
-        post.setBody(content);
+        post.setBody(content.replace("\n", "<br>"));
         post.setTitle(title);
         post.save();
     }

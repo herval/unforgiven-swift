@@ -1,4 +1,4 @@
-package us.hervalicio.unforgiven.tumblr;
+package us.hervalicio.unforgiven.content;
 
 /**
  * Created by herval on 10/31/15.

@@ -2,7 +2,7 @@ package us.hervalicio.unforgiven;
 
 import us.hervalicio.unforgiven.content.LyricsWriter;
 import us.hervalicio.unforgiven.tumblr.Client;
-import us.hervalicio.unforgiven.tumblr.Song;
+import us.hervalicio.unforgiven.content.Song;
 
 import java.io.IOException;
 
@@ -25,6 +25,7 @@ public class PostBot implements Runnable {
         while (true) {
             Song sing = copywritedContentGenerator.writeASong();
             try {
+                System.out.println(sing);
                 client.post(sing.title, sing.lyrics);
             } catch (Exception e) {
                 System.out.println("Couldn't post at this time, will retry after the break.");
@@ -44,7 +45,6 @@ public class PostBot implements Runnable {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Config conf = new Config();
-
 
         LyricsWriter writer = LyricsWriter.build(conf);
 

@@ -5,13 +5,11 @@ import us.hervalicio.unforgiven.Config;
 import us.hervalicio.unforgiven.neural.Extractor;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.nd4j.linalg.api.rng.Random;
 import us.hervalicio.unforgiven.neural.NetworkManager;
-import us.hervalicio.unforgiven.tumblr.Song;
 
 /**
  * Created by herval on 10/31/15.
