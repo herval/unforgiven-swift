@@ -1,6 +1,8 @@
 Unforgiven Swift
 ================
 
+# This project moved [here](https://github.com/herval/creative_machines)
+
 A Neural Network that generates random music lyrics crossing the genius writing of Taylor Swift and Metallica.
 
 The Unforgiven Swift also automatically posts its creations on [Tumblr](http://unforgiven-swift.tumblr.com/)
